@@ -1,0 +1,18 @@
+# requirements.txt — Install everything with: pip install -r requirements.txt
+
+# Web framework
+fastapi==0.115.0
+uvicorn[standard]==0.30.6     # ASGI server that runs FastAPI
+
+# OpenAI SDK (used for xAI / Grok API)
+openai==1.52.0
+
+# Data validation (FastAPI uses this internally)
+pydantic==2.9.2
+pydantic-settings==2.5.2      # For reading .env files into Settings class
+
+# Rate limiting (protects your Anthropic API bill)
+slowapi==0.1.9
+
+# HTTP client (used internally by the Anthropic SDK)
+httpx==0.27.2
