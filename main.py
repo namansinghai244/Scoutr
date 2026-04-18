@@ -18,7 +18,7 @@ from config import settings
 
 # ── Create the FastAPI app ───────────────────────────────────────────────────
 app = FastAPI(
-    title="Fixr Product Finder API",
+    title="Scoutr Product Finder API",
     description="AI-powered product recommendation backend",
     version="1.0.0",
 )

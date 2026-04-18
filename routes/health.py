@@ -19,5 +19,5 @@ async def health_check():
     return {
         "status": "ok",
         "timestamp": datetime.now(timezone.utc).isoformat(),
-        "service": "fixr-product-finder-api",
+        "service": "scoutr-product-finder-api",
     }

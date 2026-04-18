@@ -1,4 +1,4 @@
-# Fixr — Frontend Design Specification
+# Scoutr — Frontend Design Specification
 
 > AI-powered product finder. Users describe a problem, get the perfect product with a buy link.
 
@@ -7,7 +7,7 @@
 ## 1. Design Identity
 
 ### Concept
-**"Surgical Utility"** — Fixr is a tool that gets out of your way and gets the job done. The aesthetic is dark, sharp, and confident. No fluff, no decorative noise. Every element earns its place on screen. The accent color — an electric yellow-green — signals intelligence and precision, like a laser pointer on a dark wall.
+**"Surgical Utility"** — Scoutr is a tool that gets out of your way and gets the job done. The aesthetic is dark, sharp, and confident. No fluff, no decorative noise. Every element earns its place on screen. The accent color — an electric yellow-green — signals intelligence and precision, like a laser pointer on a dark wall.
 
 ### Personality
 - Smart but not arrogant
@@ -59,7 +59,7 @@ All colors defined as CSS custom properties on `:root`.
 
 | Element | Font | Size | Weight | Notes |
 |---|---|---|---|---|
-| Logo "Fixr" | Syne | 26px | 800 | Letter-spacing: -0.5px |
+| Logo "Scoutr" | Syne | 26px | 800 | Letter-spacing: -0.5px |
 | Section headlines | Syne | 22px | 700 | Line-height: 1.3 |
 | Product name | Syne | 16px | 700 | Line-height: 1.3 |
 | CTA button text | Syne | 13px | 700 | Letter-spacing: 0.3px |
@@ -101,7 +101,7 @@ All colors defined as CSS custom properties on `:root`.
 
 ### 5.1 Logo
 ```
-● Fixr
+● Scoutr
 ```
 - The dot is a 10×10px circle, `background: --accent`, `border-radius: 50%`
 - Animated with `pulse` keyframe: scales 1→1.3→1 with opacity 1→0.7→1 over 2.4s, ease-in-out, infinite
@@ -291,7 +291,7 @@ No media queries needed for the current single-column layout — it is naturally
 ## 10. Copy & Tone
 
 ### Header
-- **Logo:** `Fixr`
+- **Logo:** `Scoutr`
 - **Tagline:** `AI Product Finder` (uppercase, `--muted`, 12px, letter-spacing 0.5px)
 
 ### Intro Card
@@ -340,7 +340,7 @@ The frontend is intentionally a **single HTML file** — no build tools, no npm,
 
 ## 12. Future Design Extensions
 
-These are not built yet but are consistent with the Fixr aesthetic:
+These are not built yet but are consistent with the Scoutr aesthetic:
 
 | Feature | Design Direction |
 |---|---|

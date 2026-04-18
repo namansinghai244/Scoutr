@@ -4,16 +4,23 @@ FastAPI uses these to validate incoming JSON and document the API automatically.
 """
 
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, List, Literal
 
 
 # ── Incoming request from the frontend ──────────────────────────────────────
 
+class MessageTurn(BaseModel):
+    """A single turn in the conversation history."""
+    role: Literal["user", "assistant"]
+    content: str
+
+
 class ChatRequest(BaseModel):
     """
     What the frontend sends to POST /api/chat.
+    Optionally includes previous conversation turns for multi-turn context.
     Example JSON body:
-        { "message": "My back hurts when I sit all day" }
+        { "message": "My back hurts when I sit all day", "history": [] }
     """
     message: str = Field(
         ...,
@@ -21,6 +28,10 @@ class ChatRequest(BaseModel):
         max_length=1000,
         description="The user's problem description",
         json_schema_extra={"example": "My back hurts when I work from home all day"},
+    )
+    history: List[MessageTurn] = Field(
+        default_factory=list,
+        description="Previous conversation turns (up to 10) for follow-up questions",
     )
 
 

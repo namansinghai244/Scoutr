@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: scoutr
+    runtime: python
+    pythonVersion: "3.11"
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: OPENROUTER_API_KEY
+        sync: false  # Set this manually in the Render dashboard — never commit it
+      - key: OPENROUTER_MODEL
+        value: meta-llama/llama-3.1-8b-instruct
+      - key: OPENROUTER_MAX_TOKENS
+        value: 1024
+      - key: AMAZON_AFFILIATE_TAG
+        sync: false  # Set your real Associates tag in the Render dashboard
+      - key: ALLOWED_ORIGINS
+        value: '["*"]'  # Replace with your actual domain in production
+      - key: RATE_LIMIT_PER_MINUTE
+        value: 10

@@ -36,7 +36,7 @@ router = APIRouter()
         500: {"description": "AI or server error"},
     },
 )
-# @limiter.limit(f"{settings.RATE_LIMIT_PER_MINUTE}/minute")  # Temporarily disabled
+@limiter.limit(f"{settings.RATE_LIMIT_PER_MINUTE}/minute")
 async def chat(request: Request, body: ChatRequest):
     """
     Accepts a user problem description and returns a product recommendation
@@ -52,9 +52,10 @@ async def chat(request: Request, body: ChatRequest):
 
     # ── Step 1: Get recommendation from Claude ────────────────────────────
     try:
-        ai_data = await get_product_recommendation(body.message)
+        history = [t.model_dump() for t in body.history]
+        ai_data = await get_product_recommendation(body.message, history)
     except ValueError as e:
-        # Claude returned something we couldn't parse
+        # Model returned something we couldn't parse
         logger.error(f"AI parse error: {e}")
         raise HTTPException(status_code=500, detail="AI returned an unexpected format.")
     except Exception as e:

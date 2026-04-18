@@ -1,8 +1,8 @@
-# Fixr — AI Product Finder
+# Scoutr — AI Product Finder
 
 > Describe your problem. Get the perfect product.
 
-Fixr is an AI-powered product recommendation chatbot that takes a user's real-world problem and instantly recommends the best product to solve it — complete with affiliate purchase links.
+Scoutr is an AI-powered product recommendation chatbot that takes a user's real-world problem and instantly recommends the best product to solve it — complete with affiliate purchase links.
 
 ---
 
@@ -32,7 +32,7 @@ Product Finder/
 ├── .env                       # API keys & config (never commit this)
 ├── .env.example               # Template for .env
 ├── requirements.txt           # Python dependencies
-├── Fixr.md                    # Frontend design specification
+├── Scoutr.md                    # Frontend design specification
 ├── routes/
 │   ├── __init__.py
 │   ├── chat.py                # POST /api/chat — main recommendation endpoint
@@ -50,7 +50,7 @@ Product Finder/
 
 | Method | Path         | Description                          |
 |--------|-------------|--------------------------------------|
-| GET    | `/`         | Serves the Fixr frontend             |
+| GET    | `/`         | Serves the Scoutr frontend             |
 | GET    | `/health`   | Server health check (for monitoring) |
 | POST   | `/api/chat` | Send a problem, get a product rec    |
 
@@ -130,7 +130,7 @@ User types problem
 | 2026-04-13 | Fixed SlowAPI rate limiter registration in `main.py`                |
 | 2026-04-13 | Added `FileResponse` to serve frontend at `http://localhost:8000`   |
 | 2026-04-13 | Removed unsupported `response_format` param for free-tier model     |
-| 2026-04-12 | Built single-file frontend following Fixr.md "Surgical Utility" spec|
+| 2026-04-12 | Built single-file frontend following Scoutr.md "Surgical Utility" spec|
 | 2026-04-12 | Migrated from Anthropic Claude SDK to OpenAI SDK                    |
 | 2026-04-12 | Set up Python 3.12 venv, installed all dependencies                 |
 

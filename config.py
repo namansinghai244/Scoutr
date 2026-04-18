@@ -10,7 +10,7 @@ from typing import List
 class Settings(BaseSettings):
     # ── OpenRouter ────────────────────────────────────────────────────────────
     OPENROUTER_API_KEY: str = "your_openrouter_api_key_here"
-    OPENROUTER_MODEL: str = "google/gemma-4-31b-it:free"
+    OPENROUTER_MODEL: str = "meta-llama/llama-3.1-8b-instruct"
     OPENROUTER_MAX_TOKENS: int = 1024
 
     # ── Amazon Affiliate ─────────────────────────────────────────────────────
