@@ -3,10 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Scoutr — Find the Right Product</title>
-<meta name="description" content="Scoutr finds the perfect product — for anyone, anywhere.">
+<title>Scoutr — Find the Perfect Product in Seconds</title>
+<meta name="description" content="Describe any problem. Scoutr finds the perfect product for you. Monetised product recommendations powered by AI.">
+<meta property="og:title" content="Scoutr — The Interactive Product Finder">
+<meta property="og:description" content="Describe any problem. Scoutr finds the perfect product for you instantly.">
+<meta property="og:image" content="https://scoutr-pmip.onrender.com/static/og-image.png">
+<meta property="og:url" content="https://scoutr-pmip.onrender.com/">
+<meta name="twitter:card" content="summary_large_image">
 <meta name="theme-color" content="#fdfbf7">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2250%22 fill=%22%23ff6b6b%22/><circle cx=%2250%22 cy=%2250%22 r=%2230%22 fill=%22%23fff%22/></svg>">
+<!-- Google Analytics Placeholder: Replace with your ID -->
+<!-- <script async src="https://www.googletagmanager.com/gtag/js?id=UA-XXXXXXXXX-X"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','UA-XXXXXXXXX-X');</script> -->
 <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -148,6 +156,23 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
   text-decoration: none; transition: all 0.2s; box-shadow: 4px 4px 0px var(--text);
 }
 .btn-buy:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0px var(--text); background: #ff5252; }
+.btn-alt-buy {
+  flex: 1; padding: 12px; background: var(--bg3); border: 2px solid var(--text);
+  color: var(--text); border-radius: var(--radius-doodle); font-size: 14px; font-weight: 700;
+  text-decoration: none; transition: all 0.2s; text-align: center; box-shadow: 2px 2px 0px var(--text);
+}
+.btn-alt-buy:hover { transform: translate(-1px, -1px); box-shadow: 3px 3px 0px var(--text); background: var(--bg2); }
+
+.badge-verified {
+  position: absolute; top: 12px; left: 12px; background: var(--green); color: white;
+  padding: 4px 10px; border-radius: var(--radius-doodle); border: 2px solid var(--text);
+  font-size: 11px; font-weight: 700; transform: rotate(-5deg); box-shadow: 2px 2px 0px var(--text);
+}
+
+.footer-disclosure {
+  padding: 15px 20px; text-align: center; font-size: 11px; color: var(--muted);
+  line-height: 1.4; border-top: 2px solid rgba(0,0,0,0.05);
+}
 
 .typing-row { display: flex; gap: 12px; animation: msgIn 0.3s ease both; }
 .typing-dots { display: flex; gap: 6px; padding: 8px 4px; }
@@ -155,6 +180,52 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
 .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
 .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
 @keyframes blink { from{transform:translateY(0)} to{transform:translateY(-6px)} }
+
+/* ── 3-TIER CARDS ── */
+.tier-grid { display: flex; flex-direction: column; gap: 16px; margin-top: 15px; }
+.tier-card {
+  border: 4px solid var(--text); border-radius: var(--radius-doodle-alt); overflow: hidden;
+  background: var(--bg2); box-shadow: 6px 6px 0px var(--text); animation: msgIn 0.4s ease both;
+}
+.tier-card:nth-child(2) { animation-delay: 0.1s; }
+.tier-card:nth-child(3) { animation-delay: 0.2s; }
+.tier-header {
+  padding: 14px 18px; border-bottom: 4px solid var(--text); display: flex;
+  justify-content: space-between; align-items: center;
+}
+.tier-label {
+  font-size: 11px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 700;
+  padding: 4px 12px; border-radius: var(--radius-doodle); border: 2px solid var(--text);
+}
+.tier-label.budget { background: var(--accent2); color: #fff; }
+.tier-label.mid { background: var(--accent); color: #fff; }
+.tier-label.premium { background: #805ad5; color: #fff; }
+.tier-price {
+  font-size: 18px; font-weight: 700; color: var(--text);
+}
+.tier-body { padding: 16px 18px; }
+.tier-name { font-size: 19px; font-weight: 700; line-height: 1.2; color: var(--text); }
+.tier-tagline { font-size: 14px; color: var(--muted2); margin-top: 4px; font-style: italic; }
+.tier-specs { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0; }
+.tier-spec {
+  font-size: 11px; padding: 4px 10px; background: var(--bg3); border: 2px solid var(--text);
+  border-radius: var(--radius-doodle); font-weight: 700; color: var(--muted2);
+}
+.tier-why { font-size: 14px; color: var(--muted2); line-height: 1.5; margin-bottom: 14px; padding-left: 12px; border-left: 4px solid var(--accent2); }
+.tier-buttons { display: flex; flex-direction: column; gap: 8px; }
+.tier-btn-primary {
+  display: block; width: 100%; text-align: center; padding: 12px; background: var(--accent);
+  border: 3px solid var(--text); color: white; border-radius: var(--radius-doodle); font-size: 16px; font-weight: 700;
+  text-decoration: none; transition: all 0.2s; box-shadow: 4px 4px 0px var(--text); font-family: 'Comic Neue', cursive;
+}
+.tier-btn-primary:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0px var(--text); background: #ff5252; }
+.tier-alt-row { display: flex; gap: 6px; }
+.tier-btn-alt {
+  flex: 1; padding: 9px; background: var(--bg3); border: 2px solid var(--text);
+  color: var(--text); border-radius: var(--radius-doodle); font-size: 12px; font-weight: 700;
+  text-decoration: none; transition: all 0.2s; text-align: center; box-shadow: 2px 2px 0px var(--text); font-family: 'Comic Neue', cursive;
+}
+.tier-btn-alt:hover { transform: translate(-1px, -1px); box-shadow: 3px 3px 0px var(--text); background: var(--bg2); }
 
 .input-zone { padding: 20px; flex-shrink: 0; background: var(--bg2); border-top: 4px solid var(--text); }
 .input-box { display: flex; align-items: flex-end; gap: 12px; }
@@ -209,6 +280,9 @@ html, body { height: 100%; background: var(--bg); color: var(--text); font-famil
         </svg>
       </button>
     </div>
+  </div>
+  <div class="footer-disclosure">
+    Scoutr is an independent recommendation engine. We may earn a small commission when you purchase through our links at no extra cost to you. This helps us keep the bubbles floating!
   </div>
 </div>
 
@@ -416,41 +490,42 @@ function addMsg(role,html){
 function addTyping(){const r=document.createElement('div');r.className='typing-row';r.id='tRow';r.innerHTML=`<div class="av av-bot">S</div><div class="bubble bubble-bot"><div class="typing-dots"><span></span><span></span><span></span></div></div>`;feed.appendChild(r);scrl();}
 function rmTyping(){document.getElementById('tRow')?.remove();}
 
-function buildCard(d){
-  let html = `<div style="font-size:16px;color:var(--text);line-height:1.5">${esc(d.intro)}</div>`;
-  
-  if (d.tier_options && d.tier_options.length > 0) {
-    html += '<div class="chip-row" style="margin-top: 15px;">';
-    d.tier_options.forEach(opt => {
-      html += `<div class="chip" onclick="useChip(this)">${esc(opt)}</div>`;
-    });
-    html += '</div>';
-  }
-
-  if (d.product) {
-    const p = d.product;
-    const lnk = p.links?.amazon || `https://www.amazon.com/s?k=${encodeURIComponent(p.search_query)}`;
-    const priceStr = p.estimated_price ? `<span style="background:var(--accent2); color:#fff; padding:4px 12px; border-radius:100px; font-weight:700; font-size:14px; border:2px solid var(--text);">${esc(p.estimated_price)}</span>` : '';
-    const imgHtml = p.image_url ? `<img src="${p.image_url}" style="width:100%; height:220px; object-fit:cover; border-bottom:4px solid var(--text);" onerror="this.style.display='none'">` : '';
-
-    html += `
-    <div class="prod-card">
-      ${imgHtml}
-      <div class="prod-top">
-        <div style="flex:1">
-          <div class="prod-eyebrow">★ RECOMMENDED</div>
-          <div class="prod-name">${esc(p.name)}</div>
-          <div class="prod-cat">${esc(p.category)}</div>
+function buildTierCard(p, tierKey) {
+  const labelMap = { budget: 'BUDGET PICK', mid: 'TOP PICK', premium: 'PREMIUM' };
+  const label = labelMap[tierKey] || tierKey.toUpperCase();
+  const amz = p.links.amazon;
+  const specsHtml = (p.key_specs || []).map(s => `<span class="tier-spec">${esc(s)}</span>`).join('');
+  const imgHtml = p.image_url ? `<img src="${p.image_url}" style="width:100%;height:180px;object-fit:cover;border-bottom:4px solid var(--text);" onerror="this.style.display='none'">` : '';
+  return `<div class="tier-card">
+    ${imgHtml}
+    <div class="tier-header">
+      <span class="tier-label ${tierKey}">${label}</span>
+      <span class="tier-price">${esc(p.estimated_price)}</span>
+    </div>
+    <div class="tier-body">
+      <div class="tier-name">${esc(p.name)}</div>
+      <div class="tier-tagline">${esc(p.tagline)}</div>
+      <div class="tier-specs">${specsHtml}</div>
+      <div class="tier-why">${esc(p.why)}</div>
+      <div class="tier-buttons">
+        <a class="tier-btn-primary" href="${amz}" target="_blank" rel="noopener">Buy on Amazon ↗</a>
+        <div class="tier-alt-row">
+          ${p.links.ebay ? `<a class="tier-btn-alt" href="${p.links.ebay}" target="_blank" rel="noopener">eBay</a>` : ''}
+          ${p.links.walmart ? `<a class="tier-btn-alt" href="${p.links.walmart}" target="_blank" rel="noopener">Walmart</a>` : ''}
+          ${p.links.google ? `<a class="tier-btn-alt" href="${p.links.google}" target="_blank" rel="noopener">Google</a>` : ''}
         </div>
-        <div>${priceStr}</div>
       </div>
-      <div class="prod-body">
-        <div class="prod-why">${esc(p.why)}</div>
-        <a class="btn-buy" href="${lnk}" target="_blank" rel="noopener">Grab it now! ↗</a>
-      </div>
-    </div>`;
-  }
-  
+    </div>
+  </div>`;
+}
+
+function buildCard(d) {
+  let html = `<div style="font-size:16px;color:var(--text);line-height:1.5">${esc(d.intro)}</div>`;
+  html += '<div class="tier-grid">';
+  html += buildTierCard(d.budget, 'budget');
+  html += buildTierCard(d.mid, 'mid');
+  html += buildTierCard(d.premium, 'premium');
+  html += '</div>';
   return html;
 }
 

@@ -1,7 +1,6 @@
 """
-services/ai_service.py — All communication with OpenRouter API.
-Uses the OpenAI SDK pointed at OpenRouter's endpoint.
-Includes retry logic with exponential backoff for transient failures.
+services/ai_service.py — OpenRouter API integration.
+Always returns 3 products (budget / mid / premium). No tier selection step.
 """
 
 import json
@@ -13,80 +12,97 @@ from config import settings
 
 logger = logging.getLogger(__name__)
 
-# ── Async OpenAI client pointed at OpenRouter ────────────────────────────────
-# Must use AsyncOpenAI (not OpenAI) inside async FastAPI routes
 _client = AsyncOpenAI(
     api_key=settings.OPENROUTER_API_KEY,
     base_url="https://openrouter.ai/api/v1",
 )
 
-# ── Caching ────────────────────────────────────────────────────────────────
-# Caches identical requests (e.g. example chips) for 1 hour to save API costs
 _recommendation_cache = TTLCache(maxsize=1000, ttl=3600)
 
-SYSTEM_PROMPT = """You are Scoutr, a world-class product recommendation assistant.
-A user will describe a problem they have.
+SYSTEM_PROMPT = """You are Scoutr, a product intelligence engine specialising in home and office products.
 
-RULES:
-1. If the user has NOT specified whether they want a "Budget Pick", "Top Pick", or "Premium Pick", you MUST ask them which they prefer. Set "product" to null and "tier_options" to ["Budget Pick", "Top Pick", "Premium Pick"].
-2. If the user HAS specified a tier, or if they explicitly ask for a specific product, recommend ONE single product that matches their request.
-3. Be specific — include brand AND model name when possible.
-4. "estimated_price" should be a realistic string (e.g. "$50").
-5. The "why" field MUST explain why it fits that specific tier and solves the problem.
-6. Keep "intro" conversational, warm, and under 2 sentences.
-7. "search_query" must be a clean Amazon search string (no special characters).
-8. If you just need to chat or clarify (other than tier), set "product" to null and "tier_options" to null.
+When a user describes a problem, you immediately return three product recommendations: one budget pick, one mid-range pick, and one premium pick. You never ask the user to choose a budget first. You show all three instantly so they can compare and decide.
 
-YOU MUST RESPOND ONLY WITH VALID JSON. No markdown, no backticks, no explanation, no extra text before or after.
-Use exactly this schema:
+PRODUCT CATEGORIES YOU KNOW:
+Ergonomic chairs, standing desks, monitor arms, monitors, webcams, ring lights, desk lamps, mechanical keyboards, mice, laptop stands, headphones, noise-cancelling earbuds, cable management, desk organisers, air purifiers, humidifiers, smart plugs, multi-port chargers, coffee warmers, desk mats, whiteboards, document scanners, and productivity tools.
+
+PRICE TIERS:
+- budget: Best product under $75. Prioritise value, real availability, and strong user reviews.
+- mid: Best product $75-$200. The pick most people should buy. Optimal price-to-quality ratio.
+- premium: Best product $200 or more. No compromises. What professionals and power users buy.
+
+RULES FOR EACH PRODUCT:
+1. NAME: Exact brand and model. Never generic names. Write "Logitech MX Master 3S" not "a wireless mouse".
+2. TAGLINE: One short punchy sentence that sells the product. Direct. Confident. No emojis. Example: "The chair that eliminates lower back pain in the first week."
+3. ESTIMATED_PRICE: Realistic current market price for that tier. Format as "$X" or "$X-$Y".
+4. KEY_SPECS: Exactly 3 short spec strings. Each under 8 words. Focus on specs most relevant to the user's problem. Example: ["Adjustable lumbar support", "Breathable mesh back", "12-year warranty"].
+5. WHY: Exactly 2 sentences. Sentence 1 directly references the user's stated problem. Sentence 2 names the single most compelling feature that sets this product apart.
+6. SEARCH_QUERY: A high-intent retail search string. Brand + model + one key spec. Example: "Logitech MX Master 3S wireless mouse graphite".
+7. ASIN: The Amazon Standard Identification Number for this exact product. A 10-character code starting with B, found in Amazon product URLs. Example: "B09HMKFDXC". If you are not certain of the exact ASIN, set it to null. Do not guess.
+
+TONE:
+- intro: 1-2 sentences. Acknowledge the problem directly. No filler phrases like "Great question" or "Happy to help".
+- No emojis anywhere in any field.
+- Be direct and confident. You are an expert. Do not hedge.
+
+OUTPUT FORMAT:
+Respond ONLY with valid JSON. No markdown. No backticks. No text before or after the JSON.
+
 {
   "intro": "string",
-  "tier_options": ["Budget Pick", "Top Pick", "Premium Pick"] | null,
-  "product": {
+  "budget": {
     "name": "string",
     "category": "string",
+    "tagline": "string",
     "estimated_price": "string",
+    "key_specs": ["string", "string", "string"],
     "why": "string",
-    "search_query": "string"
-  } // OR null
+    "search_query": "string",
+    "asin": "string or null"
+  },
+  "mid": {
+    "name": "string",
+    "category": "string",
+    "tagline": "string",
+    "estimated_price": "string",
+    "key_specs": ["string", "string", "string"],
+    "why": "string",
+    "search_query": "string",
+    "asin": "string or null"
+  },
+  "premium": {
+    "name": "string",
+    "category": "string",
+    "tagline": "string",
+    "estimated_price": "string",
+    "key_specs": ["string", "string", "string"],
+    "why": "string",
+    "search_query": "string",
+    "asin": "string or null"
+  }
 }"""
 
 
 async def get_product_recommendation(user_message: str, history: list | None = None) -> dict:
     """
-    Sends the user's problem to OpenRouter and returns a parsed product recommendation.
-    Accepts optional conversation history for multi-turn follow-up questions.
-    Retries up to 3 times with exponential backoff on failure.
-
-    Args:
-        user_message: The raw problem text typed by the user.
-        history:      Optional list of previous {role, content} dicts for context.
-
-    Returns:
-        A dict matching the JSON schema above.
-
-    Raises:
-        ValueError: If the model returns unparseable JSON after all retries.
-        Exception: If the API call fails after all retries.
+    Returns 3 product picks (budget, mid, premium) for a user's problem.
+    Retries up to 3 times with exponential backoff.
     """
     max_retries = 3
-    delay = 3  # base seconds — scales as 3*attempt (3s → 6s → 9s)
-
     last_error = None
+    raw_text = ""
 
-    # Build the messages array: system → history (last 6 turns) → new user message
     history = history or []
-    trimmed_history = history[-6:]  # cap at 3 exchanges to stay within token budget
+    trimmed_history = history[-6:]
 
-    # ── Check Cache First ─────────────────────────────────────────────────────
     cache_key = f"{user_message}|{json.dumps(trimmed_history)}"
     if cache_key in _recommendation_cache:
-        logger.info(f"Serving cached recommendation for: {user_message[:30]}...")
+        logger.info(f"Cache hit: '{user_message[:40]}'")
         return _recommendation_cache[cache_key]
 
     for attempt in range(1, max_retries + 1):
         try:
-            logger.info(f"OpenRouter request attempt {attempt}/{max_retries}")
+            logger.info(f"OpenRouter attempt {attempt}/{max_retries}")
 
             messages = [{"role": "system", "content": SYSTEM_PROMPT}]
             for turn in trimmed_history:
@@ -99,65 +115,52 @@ async def get_product_recommendation(user_message: str, history: list | None = N
                 messages=messages,
             )
 
-            # Extract raw text from the response
-            raw_text = response.choices[0].message.content.strip()
-            logger.info(f"Raw response received: {raw_text[:100]}...")
+            raw_text = response.choices[0].message.content
+            if not raw_text:
+                raise ValueError("Model returned empty response")
 
-            # Strip accidental markdown fences if the model adds them
-            if raw_text.startswith("```"):
-                # Remove opening fence (```json or just ```)
-                raw_text = raw_text.split("\n", 1)[-1] if "\n" in raw_text else raw_text[3:]
-                # Remove trailing fence if present
-                if raw_text.rstrip().endswith("```"):
-                    raw_text = raw_text.rstrip()[:-3]
             raw_text = raw_text.strip()
+            logger.info(f"Raw: {raw_text[:150]}")
 
-            # Parse JSON with bulletproof extraction
-            start_idx = raw_text.find("{")
-            end_idx = raw_text.rfind("}")
-            if start_idx != -1 and end_idx != -1 and end_idx > start_idx:
-                clean_json = raw_text[start_idx:end_idx+1]
-            else:
-                clean_json = raw_text
-                
+            start = raw_text.find("{")
+            end = raw_text.rfind("}")
+            clean_json = raw_text[start:end + 1] if start != -1 and end > start else raw_text
             data = json.loads(clean_json)
 
-            # Basic validation — make sure required keys exist
             if "intro" not in data:
-                raise ValueError(f"Missing required key 'intro' in response: {data}")
+                raise ValueError(f"Missing 'intro'. Keys: {list(data.keys())}")
 
-            product = data.get("product")
-            if product is not None:
-                required_product_keys = ["name", "category", "estimated_price", "why", "search_query"]
-                for key in required_product_keys:
-                    if key not in product:
-                        raise ValueError(f"Missing product key '{key}'")
-                logger.info(f"Successfully parsed single-tier recommendation")
-            else:
-                logger.info(f"Conversational reply without product: {data.get('intro', '')[:30]}")
-            
-            # Save to cache
+            for tier in ["budget", "mid", "premium"]:
+                if tier not in data:
+                    raise ValueError(f"Missing tier '{tier}'")
+                p = data[tier]
+                for key in ["name", "category", "tagline", "estimated_price", "key_specs", "why", "search_query"]:
+                    if key not in p:
+                        raise ValueError(f"Missing '{key}' in {tier}")
+                if not isinstance(p.get("key_specs"), list):
+                    p["key_specs"] = ["—", "—", "—"]
+                while len(p["key_specs"]) < 3:
+                    p["key_specs"].append("—")
+                p.setdefault("asin", None)
+                p.setdefault("image_url", None)
+                logger.info(f"  {tier}: {p['name']} {p['estimated_price']}")
+
             _recommendation_cache[cache_key] = data
-            
             return data
 
         except json.JSONDecodeError as e:
-            last_error = ValueError(f"Model returned invalid JSON on attempt {attempt}: {e}\nRaw: {raw_text}")
+            last_error = ValueError(f"JSON error (attempt {attempt}): {e} | {raw_text[:200]}")
             logger.warning(str(last_error))
-
         except ValueError as e:
             last_error = e
-            logger.warning(f"Validation error on attempt {attempt}: {e}")
-
+            logger.warning(f"Validation error (attempt {attempt}): {e}")
         except Exception as e:
             last_error = e
-            logger.warning(f"API error on attempt {attempt}: {e}")
+            logger.warning(f"API error (attempt {attempt}): {type(e).__name__}: {e}")
 
-        # Wait before retrying (exponential backoff)
         if attempt < max_retries:
             wait = 3 * attempt
             logger.info(f"Retrying in {wait}s...")
             await asyncio.sleep(wait)
 
-    # All retries exhausted
-    raise last_error or Exception("All retry attempts failed with unknown error")
+    raise last_error or Exception("All retries failed")
