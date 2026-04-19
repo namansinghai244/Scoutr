@@ -144,6 +144,57 @@ h1 .accent{color:var(--accent)}
 /* ── ERROR ── */
 .error-box{padding:20px 24px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);border-radius:12px;color:var(--danger);font-size:14px;text-align:center;margin-bottom:20px}
 
+/* ── MOBILE RESPONSIVE ── */
+@media(max-width:600px){
+  .container{padding:0 16px}
+  .nav{padding:12px 0}
+  .nav-logo{font-size:18px}
+  .nav-links{gap:16px;font-size:12px}
+  .hero{padding:100px 16px 60px;min-height:calc(100vh - 60px)}
+  .hero-badge{margin-bottom:24px;font-size:11px;padding:5px 12px}
+  h1{font-size:32px;letter-spacing:-1px;margin-bottom:12px}
+  .hero-sub{font-size:15px;margin-bottom:36px;padding:0 8px}
+  .search-box{padding:4px 4px 4px 16px;border-radius:14px}
+  #heroInput{font-size:15px;padding:12px 0}
+  #heroBtn{width:46px;height:46px;border-radius:10px}
+  .chips{gap:8px;margin-top:20px}
+  .chip{padding:8px 14px;font-size:12px}
+  .proof{margin-top:32px;font-size:12px;flex-direction:column;gap:6px}
+  #resultsSection{padding:24px 0 60px}
+  .results-header{margin-bottom:28px;padding:0 8px}
+  .results-intro{font-size:17px}
+  .tier-grid{gap:16px;margin-bottom:28px}
+  .tier-card:hover{transform:none;box-shadow:none}
+  .tier-img{height:150px}
+  .tier-badge-row{padding:14px 16px 0}
+  .tier-price{font-size:18px}
+  .tier-body{padding:10px 16px 16px}
+  .tier-name{font-size:16px}
+  .tier-tagline{font-size:12px;margin-bottom:10px}
+  .tier-spec{font-size:12px}
+  .tier-why{font-size:12px;padding:10px;margin-bottom:14px}
+  .btn-primary{padding:14px;font-size:14px;min-height:48px}
+  .tier-card.featured .btn-primary{padding:14px;font-size:14px}
+  .alt-links{gap:6px}
+  .alt-link{padding:10px 6px;font-size:11px;min-height:44px;display:flex;align-items:center;justify-content:center}
+  .trust-bar{padding:18px 16px;margin-bottom:28px}
+  .trust-bar p{font-size:12px}
+  .new-search{padding:28px 0}
+  #loadingSection{padding:80px 16px}
+  .loader-icon{width:40px;height:40px;margin-bottom:24px}
+  #loadingText{font-size:14px}
+  .load-step{font-size:12px}
+  .footer{padding:28px 16px;font-size:10px}
+}
+
+/* Tablet tweaks */
+@media(min-width:601px) and (max-width:900px){
+  .hero{padding:100px 24px 60px}
+  h1{font-size:42px}
+  .hero-sub{font-size:16px}
+  .tier-grid{gap:16px}
+}
+
 /* ── FOOTER ── */
 .footer{padding:40px 24px;text-align:center;border-top:1px solid var(--border);font-size:11px;color:var(--muted);line-height:1.8}
 </style>

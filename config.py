@@ -13,9 +13,11 @@ class Settings(BaseSettings):
     OPENROUTER_MODEL: str = "meta-llama/llama-3.1-8b-instruct"
     OPENROUTER_MAX_TOKENS: int = 1024
 
-    # ── Amazon Affiliate ─────────────────────────────────────────────────────
-    # Get this after joining Amazon Associates: amazon.com/associates
+    # ── Affiliate Programs ────────────────────────────────────────────────────
     AMAZON_AFFILIATE_TAG: str = "your-tag-20"
+    EBAY_CAMPAIGN_ID: str = ""        # eBay Partner Network campaign ID
+    WALMART_IMPACT_ID: str = ""       # Walmart affiliate ID via Impact
+    GENIUSLINK_TSID: str = ""         # Geniuslink tracking source ID (enables link localization)
 
     # ── Server ───────────────────────────────────────────────────────────────
     # In production: replace "*" with "https://yourfrontend.com"
