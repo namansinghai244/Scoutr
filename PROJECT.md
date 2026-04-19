@@ -14,7 +14,8 @@ Scoutr is an AI-powered product recommendation chatbot that takes a user's real-
 | **Backend** | FastAPI + Uvicorn             | Async REST API with auto-reload          |
 | **AI**      | OpenRouter API (OpenAI SDK)   | LLM inference via OpenAI-compatible endpoint |
 | **Model**   | `google/gemma-4-31b-it:free`  | Free-tier Gemma model via OpenRouter     |
-| **Frontend**| Single-file HTML/CSS/JS       | "Surgical Utility" dark theme design     |
+| **Frontend**| Single-file HTML/CSS/JS       | Custom 2D Physics Engine + Doodly UI Theme|
+| **Images**  | `duckduckgo-search`           | Real-time product image fetching from web|
 | **Validation** | Pydantic v2               | Request/response schema enforcement      |
 | **Rate Limiting** | SlowAPI               | Per-IP rate limiting (10 req/min)        |
 | **Config**  | pydantic-settings + `.env`    | Environment-based secrets management     |
@@ -40,6 +41,7 @@ Product Finder/
 ├── services/
 │   ├── __init__.py
 │   ├── ai_service.py          # OpenRouter API integration + retry logic
+│   ├── image_service.py       # DuckDuckGo image scraping
 │   └── affiliate_service.py   # Amazon & Google Shopping link builder
 └── venv/                      # Python virtual environment (gitignored)
 ```
@@ -64,19 +66,29 @@ Product Finder/
 **Response:**
 ```json
 {
-  "intro": "I'm sorry to hear your back is acting up; the right support makes all the difference.",
+  "intro": "I'm sorry to hear your back is acting up; let's find the right tier for you.",
+  "tier_options": ["Budget Pick", "Top Pick", "Premium Pick"],
+  "product": null
+}
+```
+
+*Or if a tier was selected:*
+```json
+{
+  "intro": "Here is the top recommendation for your back pain.",
+  "tier_options": null,
   "product": {
     "name": "SIHOO M18 Ergonomic Office Chair",
     "category": "Office Furniture",
+    "estimated_price": "$150",
     "why": "Your back pain likely stems from poor lumbar support...",
     "search_query": "SIHOO M18 Ergonomic Office Chair",
+    "image_url": "https://example.com/sihoo.jpg",
     "links": {
       "amazon": "https://www.amazon.com/s?k=SIHOO+M18...&tag=your-tag-20",
       "google": "https://www.google.com/search?q=SIHOO+M18...&tbm=shop"
-    },
-    "also_consider": "Herman Miller Aeron"
-  },
-  "success": true
+    }
+  }
 }
 ```
 
@@ -116,8 +128,9 @@ User types problem
 - **Retry Logic**: 3 attempts with exponential backoff (5s → 10s) for transient API failures
 - **Rate Limiting**: 10 requests/IP/minute via SlowAPI (protects API costs)
 - **Affiliate Links**: Auto-generated Amazon Associates links with your tag
-- **Error Handling**: Graceful error bubbles in the UI instead of crashes
-- **Design System**: Custom dark theme with CSS variables, animations (pulse, fadeUp, blink)
+- **Tiered Recommendations**: System gracefully prompts users for their budget preference before generating single product recommendations.
+- **Image Fetching**: Dynamically fetches the top product image via DuckDuckGo.
+- **Physics Engine UI**: Hand-drawn doodle theme powered by a custom vanilla JS physics loop managing 40 colliding category bubbles with cursor repulsion.
 
 ---
 
@@ -125,6 +138,9 @@ User types problem
 
 | Date       | Change                                                             |
 |------------|---------------------------------------------------------------------|
+| 2026-04-19 | Massive UI redesign to light "Doodly" theme + Interactive Physics Engine |
+| 2026-04-19 | Migrated to single-tier recommendation flow with explicit user choice options |
+| 2026-04-19 | Integrated `duckduckgo-search` for dynamic product image scraping  |
 | 2026-04-13 | Added retry logic with exponential backoff to `ai_service.py`       |
 | 2026-04-13 | Switched API provider from xAI Grok → Google Gemini → **OpenRouter** |
 | 2026-04-13 | Fixed SlowAPI rate limiter registration in `main.py`                |

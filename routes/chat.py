@@ -15,6 +15,7 @@ from slowapi.util import get_remote_address
 from models import ChatRequest, ChatResponse, ProductRecommendation, ProductLinks
 from services.ai_service import get_product_recommendation
 from services.affiliate_service import build_all_links
+from services.image_service import fetch_product_image
 from config import settings
 
 logger = logging.getLogger(__name__)
@@ -63,27 +64,36 @@ async def chat(request: Request, body: ChatRequest):
         logger.error(f"AI Service API error: {e}")
         raise HTTPException(status_code=502, detail="Could not reach AI service.")
 
-    # ── Step 2: Build affiliate links from the search query ───────────────
-    search_query = ai_data["product"]["search_query"]
-    links = build_all_links(search_query)
-
-    # ── Step 3: Assemble the final response ───────────────────────────────
-    product_data = ai_data["product"]
-
-    response = ChatResponse(
-        intro=ai_data["intro"],
-        product=ProductRecommendation(
+    # ── Step 2: Build affiliate links and fetch image ───────────────
+    product_data = ai_data.get("product")
+    tier_options = ai_data.get("tier_options")
+    
+    if product_data:
+        sq = product_data["search_query"]
+        lnks = build_all_links(sq)
+        
+        img_url = fetch_product_image(sq)
+        
+        prod_rec = ProductRecommendation(
             name=product_data["name"],
             category=product_data["category"],
+            estimated_price=product_data["estimated_price"],
             why=product_data["why"],
-            search_query=search_query,
-            links=ProductLinks(
-                amazon=links["amazon"],
-                google=links["google"],
-            ),
-            also_consider=product_data.get("also_consider"),
-        ),
+            search_query=sq,
+            image_url=img_url,
+            links=ProductLinks(amazon=lnks["amazon"], google=lnks["google"])
+        )
+        rec_name = product_data["name"]
+    else:
+        prod_rec = None
+        rec_name = "Conversational Reply / Options"
+
+    # ── Step 3: Assemble the final response ───────────────────────────────
+    response = ChatResponse(
+        intro=ai_data["intro"],
+        tier_options=tier_options,
+        product=prod_rec,
     )
 
-    logger.info(f"Recommended: {product_data['name']}")
+    logger.info(f"Recommended: {rec_name}")
     return response

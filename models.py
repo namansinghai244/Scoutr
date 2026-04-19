@@ -47,16 +47,15 @@ class ProductLinks(BaseModel):
 
 class ProductRecommendation(BaseModel):
     """
-    The product the AI recommends.
+    A single product recommendation.
     """
-    name: str = Field(description="Brand + product name, e.g. 'Secretlab Titan Evo 2022'")
+    name: str = Field(description="Brand + product name, e.g. 'Secretlab Titan Evo'")
     category: str = Field(description="Product category, e.g. 'Ergonomic Chair'")
-    why: str = Field(description="Why this solves the user's specific problem")
+    estimated_price: str = Field(description="Estimated price of the product, e.g. '$50'")
+    why: str = Field(description="Why this solves the user's problem")
     search_query: str = Field(description="Optimised Amazon search string")
+    image_url: Optional[str] = Field(default=None, description="Image URL fetched dynamically")
     links: ProductLinks
-    also_consider: Optional[str] = Field(
-        None, description="One alternative product worth mentioning"
-    )
 
 
 class ChatResponse(BaseModel):
@@ -65,12 +64,14 @@ class ChatResponse(BaseModel):
     Example JSON:
     {
         "intro": "Sounds like a classic WFH posture issue...",
-        "product": { ... },
+        "tier_options": ["Budget Pick", "Top Pick", "Premium Pick"],
+        "product": null,
         "success": true
     }
     """
     intro: str = Field(description="Empathetic 1-2 sentence opener from the AI")
-    product: ProductRecommendation
+    tier_options: Optional[List[str]] = Field(default=None, description="List of tier options to display as chips")
+    product: Optional[ProductRecommendation] = None
     success: bool = True
 
 
