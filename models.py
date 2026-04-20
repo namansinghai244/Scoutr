@@ -1,5 +1,7 @@
 """
 models.py — Data shapes for every API request and response.
+4-tier system: cost_effective / basic / premium / lavish
+Each tier contains 3 products for comparison.
 """
 
 from pydantic import BaseModel, Field
@@ -28,6 +30,7 @@ class ProductRecommendation(BaseModel):
     category: str
     tagline: str
     estimated_price: str
+    original_price: Optional[str] = None
     key_specs: List[str]
     why: str
     search_query: str
@@ -38,9 +41,10 @@ class ProductRecommendation(BaseModel):
 
 class ChatResponse(BaseModel):
     intro: str
-    budget: ProductRecommendation
-    mid: ProductRecommendation
-    premium: ProductRecommendation
+    cost_effective: List[ProductRecommendation]
+    basic: List[ProductRecommendation]
+    premium: List[ProductRecommendation]
+    lavish: List[ProductRecommendation]
     success: bool = True
 
 

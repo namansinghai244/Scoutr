@@ -1,6 +1,6 @@
 """
 routes/chat.py — POST /api/chat
-Returns 3 products (budget, mid, premium) for any problem. No tier selection.
+Returns 4 tiers (cost_effective, basic, premium, lavish) with 3 products each.
 """
 
 import logging
@@ -18,6 +18,8 @@ logger = logging.getLogger(__name__)
 limiter = Limiter(key_func=get_remote_address)
 router = APIRouter()
 
+TIERS = ["cost_effective", "basic", "premium", "lavish"]
+
 
 def build_product(product_data: dict) -> ProductRecommendation:
     sq = product_data["search_query"]
@@ -29,6 +31,7 @@ def build_product(product_data: dict) -> ProductRecommendation:
         category=product_data["category"],
         tagline=product_data["tagline"],
         estimated_price=product_data["estimated_price"],
+        original_price=product_data.get("original_price"),
         key_specs=product_data["key_specs"],
         why=product_data["why"],
         search_query=sq,
@@ -59,12 +62,14 @@ async def chat(request: Request, body: ChatRequest):
         raise HTTPException(status_code=502, detail="Could not reach AI service. Please try again.")
 
     try:
-        budget = build_product(ai_data["budget"])
-        mid = build_product(ai_data["mid"])
-        premium = build_product(ai_data["premium"])
+        result = {"intro": ai_data["intro"]}
+        for tier in TIERS:
+            products = ai_data[tier]
+            result[tier] = [build_product(p) for p in products]
+            names = [p["name"] for p in products]
+            logger.info(f"  {tier}: {', '.join(names)}")
     except Exception as e:
         logger.error(f"Product build error: {e}")
         raise HTTPException(status_code=500, detail="Failed to assemble product data.")
 
-    logger.info(f"Done — {budget.name} | {mid.name} | {premium.name}")
-    return ChatResponse(intro=ai_data["intro"], budget=budget, mid=mid, premium=premium)
+    return ChatResponse(**result)

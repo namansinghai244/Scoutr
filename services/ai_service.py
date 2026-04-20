@@ -1,6 +1,6 @@
 """
 services/ai_service.py — OpenRouter API integration.
-Always returns 3 products (budget / mid / premium). No tier selection step.
+Returns 4 tiers (cost_effective / basic / premium / lavish) with 3 products each.
 """
 
 import json
@@ -19,75 +19,48 @@ _client = AsyncOpenAI(
 
 _recommendation_cache = TTLCache(maxsize=1000, ttl=3600)
 
-SYSTEM_PROMPT = """You are Scoutr, a product intelligence engine specialising in home and office products.
+SYSTEM_PROMPT = """You are Scoutr, a product intelligence engine.
 
-When a user describes a problem, you immediately return three product recommendations: one budget pick, one mid-range pick, and one premium pick. You never ask the user to choose a budget first. You show all three instantly so they can compare and decide.
+When a user describes a problem, return FOUR tiers of product recommendations with THREE products per tier (12 products total). The tiers are:
 
-PRODUCT CATEGORIES YOU KNOW:
-Ergonomic chairs, standing desks, monitor arms, monitors, webcams, ring lights, desk lamps, mechanical keyboards, mice, laptop stands, headphones, noise-cancelling earbuds, cable management, desk organisers, air purifiers, humidifiers, smart plugs, multi-port chargers, coffee warmers, desk mats, whiteboards, document scanners, and productivity tools.
-
-PRICE TIERS:
-- budget: Best product under $75. Prioritise value, real availability, and strong user reviews.
-- mid: Best product $75-$200. The pick most people should buy. Optimal price-to-quality ratio.
-- premium: Best product $200 or more. No compromises. What professionals and power users buy.
+TIERS:
+- cost_effective: Best products under $50. Maximum value for minimum spend.
+- basic: Best products $50-$150. Solid quality, great price-to-performance.
+- premium: Best products $150-$400. Professional grade, best-in-class features.
+- lavish: Best products $400+. Absolute top-tier, no compromises, luxury.
 
 RULES FOR EACH PRODUCT:
-1. NAME: Exact brand and model. Never generic names. Write "Logitech MX Master 3S" not "a wireless mouse".
-2. TAGLINE: One short punchy sentence that sells the product. Direct. Confident. No emojis. Example: "The chair that eliminates lower back pain in the first week."
-3. ESTIMATED_PRICE: Realistic current market price for that tier. Format as "$X" or "$X-$Y".
-4. KEY_SPECS: Exactly 3 short spec strings. Each under 8 words. Focus on specs most relevant to the user's problem. Example: ["Adjustable lumbar support", "Breathable mesh back", "12-year warranty"].
-5. WHY: Exactly 2 sentences. Sentence 1 directly references the user's stated problem. Sentence 2 names the single most compelling feature that sets this product apart.
-6. SEARCH_QUERY: A high-intent retail search string. Brand + model + one key spec. Example: "Logitech MX Master 3S wireless mouse graphite".
-7. ASIN: The Amazon Standard Identification Number for this exact product. A 10-character code starting with B, found in Amazon product URLs. Example: "B09HMKFDXC". If you are not certain of the exact ASIN, set it to null. Do not guess.
+1. NAME: Exact brand and model. Never generic names.
+2. TAGLINE: One punchy sentence that sells the product.
+3. ESTIMATED_PRICE: Current market/deal price. Format "$X" or "$X-$Y".
+4. ORIGINAL_PRICE: The original MSRP/retail price before any deals. Format "$X". If same as estimated_price, set to null.
+5. KEY_SPECS: Exactly 3 short spec strings, each under 8 words.
+6. WHY: 2 sentences. Sentence 1 references user's problem. Sentence 2 names the key differentiator.
+7. SEARCH_QUERY: Brand + model + one key spec for retail search.
+8. ASIN: Amazon ASIN (10-char code starting with B). Set null if unsure.
 
 TONE:
-- intro: 1-2 sentences. Acknowledge the problem directly. No filler phrases like "Great question" or "Happy to help".
-- No emojis anywhere in any field.
-- Be direct and confident. You are an expert. Do not hedge.
+- intro: 1-2 sentences acknowledging the problem directly. No filler.
+- No emojis. Be direct and confident.
 
-OUTPUT FORMAT:
-Respond ONLY with valid JSON. No markdown. No backticks. No text before or after the JSON.
-
+OUTPUT FORMAT — respond ONLY with valid JSON, no markdown:
 {
   "intro": "string",
-  "budget": {
-    "name": "string",
-    "category": "string",
-    "tagline": "string",
-    "estimated_price": "string",
-    "key_specs": ["string", "string", "string"],
-    "why": "string",
-    "search_query": "string",
-    "asin": "string or null"
-  },
-  "mid": {
-    "name": "string",
-    "category": "string",
-    "tagline": "string",
-    "estimated_price": "string",
-    "key_specs": ["string", "string", "string"],
-    "why": "string",
-    "search_query": "string",
-    "asin": "string or null"
-  },
-  "premium": {
-    "name": "string",
-    "category": "string",
-    "tagline": "string",
-    "estimated_price": "string",
-    "key_specs": ["string", "string", "string"],
-    "why": "string",
-    "search_query": "string",
-    "asin": "string or null"
-  }
+  "cost_effective": [
+    {"name":"string","category":"string","tagline":"string","estimated_price":"string","original_price":"string or null","key_specs":["s","s","s"],"why":"string","search_query":"string","asin":"string or null"},
+    {"name":"string","category":"string","tagline":"string","estimated_price":"string","original_price":"string or null","key_specs":["s","s","s"],"why":"string","search_query":"string","asin":"string or null"},
+    {"name":"string","category":"string","tagline":"string","estimated_price":"string","original_price":"string or null","key_specs":["s","s","s"],"why":"string","search_query":"string","asin":"string or null"}
+  ],
+  "basic": [ ... same 3-product structure ... ],
+  "premium": [ ... same 3-product structure ... ],
+  "lavish": [ ... same 3-product structure ... ]
 }"""
+
+TIERS = ["cost_effective", "basic", "premium", "lavish"]
+REQUIRED_KEYS = ["name", "category", "tagline", "estimated_price", "key_specs", "why", "search_query"]
 
 
 async def get_product_recommendation(user_message: str, history: list | None = None) -> dict:
-    """
-    Returns 3 product picks (budget, mid, premium) for a user's problem.
-    Retries up to 3 times with exponential backoff.
-    """
     max_retries = 3
     last_error = None
     raw_text = ""
@@ -111,7 +84,7 @@ async def get_product_recommendation(user_message: str, history: list | None = N
 
             response = await _client.chat.completions.create(
                 model=settings.OPENROUTER_MODEL,
-                max_tokens=settings.OPENROUTER_MAX_TOKENS,
+                max_tokens=3000,
                 messages=messages,
             )
 
@@ -130,20 +103,31 @@ async def get_product_recommendation(user_message: str, history: list | None = N
             if "intro" not in data:
                 raise ValueError(f"Missing 'intro'. Keys: {list(data.keys())}")
 
-            for tier in ["budget", "mid", "premium"]:
+            for tier in TIERS:
                 if tier not in data:
                     raise ValueError(f"Missing tier '{tier}'")
-                p = data[tier]
-                for key in ["name", "category", "tagline", "estimated_price", "key_specs", "why", "search_query"]:
-                    if key not in p:
-                        raise ValueError(f"Missing '{key}' in {tier}")
-                if not isinstance(p.get("key_specs"), list):
-                    p["key_specs"] = ["—", "—", "—"]
-                while len(p["key_specs"]) < 3:
-                    p["key_specs"].append("—")
-                p.setdefault("asin", None)
-                p.setdefault("image_url", None)
-                logger.info(f"  {tier}: {p['name']} {p['estimated_price']}")
+                products = data[tier]
+                if not isinstance(products, list):
+                    raise ValueError(f"Tier '{tier}' is not a list")
+                if len(products) < 1:
+                    raise ValueError(f"Tier '{tier}' has no products")
+                # Pad to 3 if LLM returned fewer
+                while len(products) < 3:
+                    products.append(dict(products[0]))
+                # Trim to 3
+                data[tier] = products[:3]
+                for i, p in enumerate(data[tier]):
+                    for key in REQUIRED_KEYS:
+                        if key not in p:
+                            raise ValueError(f"Missing '{key}' in {tier}[{i}]")
+                    if not isinstance(p.get("key_specs"), list):
+                        p["key_specs"] = ["—", "—", "—"]
+                    while len(p["key_specs"]) < 3:
+                        p["key_specs"].append("—")
+                    p.setdefault("asin", None)
+                    p.setdefault("original_price", None)
+                    p.setdefault("image_url", None)
+                    logger.info(f"  {tier}[{i}]: {p['name']} {p['estimated_price']}")
 
             _recommendation_cache[cache_key] = data
             return data
