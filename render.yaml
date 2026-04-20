@@ -10,7 +10,7 @@ services:
       - key: OPENROUTER_MODEL
         value: meta-llama/llama-3.1-8b-instruct
       - key: OPENROUTER_MAX_TOKENS
-        value: 1024
+        value: 3000
       - key: AMAZON_AFFILIATE_TAG
         sync: false  # Set your real Associates tag in the Render dashboard
       - key: ALLOWED_ORIGINS

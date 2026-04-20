@@ -1,11 +1,12 @@
 """
-main.py — Entry point for the Product Finder API
+main.py — Entry point for the Product Finder API.
 Starts the FastAPI app and wires together all routes.
 """
 
-import uvicorn
+from pathlib import Path
 import logging
-logging.basicConfig(level=logging.INFO)
+
+import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
@@ -15,6 +16,12 @@ from slowapi.errors import RateLimitExceeded
 from routes.chat import router as chat_router, limiter
 from routes.health import router as health_router
 from config import settings
+
+logging.basicConfig(level=logging.INFO)
+
+BASE_DIR = Path(__file__).resolve().parent
+FRONTEND_PATH = BASE_DIR / "index.html"
+CORS_ALLOW_CREDENTIALS = "*" not in settings.ALLOWED_ORIGINS
 
 # ── Create the FastAPI app ───────────────────────────────────────────────────
 app = FastAPI(
@@ -33,7 +40,7 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.ALLOWED_ORIGINS,
-    allow_credentials=True,
+    allow_credentials=CORS_ALLOW_CREDENTIALS,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -46,7 +53,7 @@ app.include_router(chat_router, prefix="/api")  # POST /api/chat
 # ── Serve frontend ───────────────────────────────────────────────────────────
 @app.get("/")
 async def serve_frontend():
-    return FileResponse("index.html")
+    return FileResponse(FRONTEND_PATH)
 
 
 # ── Run directly with: python main.py ───────────────────────────────────────

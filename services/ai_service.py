@@ -47,13 +47,25 @@ OUTPUT FORMAT — respond ONLY with valid JSON, no markdown:
 {
   "intro": "string",
   "cost_effective": [
-    {"name":"string","category":"string","tagline":"string","estimated_price":"string","original_price":"string or null","key_specs":["s","s","s"],"why":"string","search_query":"string","asin":"string or null"},
-    {"name":"string","category":"string","tagline":"string","estimated_price":"string","original_price":"string or null","key_specs":["s","s","s"],"why":"string","search_query":"string","asin":"string or null"},
-    {"name":"string","category":"string","tagline":"string","estimated_price":"string","original_price":"string or null","key_specs":["s","s","s"],"why":"string","search_query":"string","asin":"string or null"}
+    {"name":"string","category":"string","tagline":"string","estimated_price":"string","original_price":null,"key_specs":["string","string","string"],"why":"string","search_query":"string","asin":null},
+    {"name":"string","category":"string","tagline":"string","estimated_price":"string","original_price":null,"key_specs":["string","string","string"],"why":"string","search_query":"string","asin":null},
+    {"name":"string","category":"string","tagline":"string","estimated_price":"string","original_price":null,"key_specs":["string","string","string"],"why":"string","search_query":"string","asin":null}
   ],
-  "basic": [ ... same 3-product structure ... ],
-  "premium": [ ... same 3-product structure ... ],
-  "lavish": [ ... same 3-product structure ... ]
+  "basic": [
+    {"name":"string","category":"string","tagline":"string","estimated_price":"string","original_price":null,"key_specs":["string","string","string"],"why":"string","search_query":"string","asin":null},
+    {"name":"string","category":"string","tagline":"string","estimated_price":"string","original_price":null,"key_specs":["string","string","string"],"why":"string","search_query":"string","asin":null},
+    {"name":"string","category":"string","tagline":"string","estimated_price":"string","original_price":null,"key_specs":["string","string","string"],"why":"string","search_query":"string","asin":null}
+  ],
+  "premium": [
+    {"name":"string","category":"string","tagline":"string","estimated_price":"string","original_price":null,"key_specs":["string","string","string"],"why":"string","search_query":"string","asin":null},
+    {"name":"string","category":"string","tagline":"string","estimated_price":"string","original_price":null,"key_specs":["string","string","string"],"why":"string","search_query":"string","asin":null},
+    {"name":"string","category":"string","tagline":"string","estimated_price":"string","original_price":null,"key_specs":["string","string","string"],"why":"string","search_query":"string","asin":null}
+  ],
+  "lavish": [
+    {"name":"string","category":"string","tagline":"string","estimated_price":"string","original_price":null,"key_specs":["string","string","string"],"why":"string","search_query":"string","asin":null},
+    {"name":"string","category":"string","tagline":"string","estimated_price":"string","original_price":null,"key_specs":["string","string","string"],"why":"string","search_query":"string","asin":null},
+    {"name":"string","category":"string","tagline":"string","estimated_price":"string","original_price":null,"key_specs":["string","string","string"],"why":"string","search_query":"string","asin":null}
+  ]
 }"""
 
 TIERS = ["cost_effective", "basic", "premium", "lavish"]
@@ -84,7 +96,7 @@ async def get_product_recommendation(user_message: str, history: list | None = N
 
             response = await _client.chat.completions.create(
                 model=settings.OPENROUTER_MODEL,
-                max_tokens=3000,
+                max_tokens=settings.OPENROUTER_MAX_TOKENS,
                 messages=messages,
             )
 
@@ -109,12 +121,8 @@ async def get_product_recommendation(user_message: str, history: list | None = N
                 products = data[tier]
                 if not isinstance(products, list):
                     raise ValueError(f"Tier '{tier}' is not a list")
-                if len(products) < 1:
-                    raise ValueError(f"Tier '{tier}' has no products")
-                # Pad to 3 if LLM returned fewer
-                while len(products) < 3:
-                    products.append(dict(products[0]))
-                # Trim to 3
+                if len(products) != 3:
+                    raise ValueError(f"Tier '{tier}' must contain exactly 3 products, got {len(products)}")
                 data[tier] = products[:3]
                 for i, p in enumerate(data[tier]):
                     for key in REQUIRED_KEYS:
