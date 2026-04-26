@@ -6,3 +6,9 @@ venv/
 .vscode/
 Thumbs.db
 desktop.ini
+data/datasets/
+data/products.db
+data/faiss_index.bin
+data/faiss_ids.json
+_incoming_dataset_bundle/
+_kaggle_auth/

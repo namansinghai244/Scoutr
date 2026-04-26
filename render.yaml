@@ -2,7 +2,7 @@ services:
   - type: web
     name: scoutr
     runtime: python
-    buildCommand: pip install -r requirements.txt
+    buildCommand: pip install -r requirements.txt && python scripts/download_datasets.py && python scripts/ingest_products.py && python scripts/build_embeddings.py --max-products 200000 --min-rating 3.5
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: OPENROUTER_API_KEY
@@ -13,7 +13,17 @@ services:
         value: 3000
       - key: AMAZON_AFFILIATE_TAG
         sync: false  # Set your real Associates tag in the Render dashboard
+      - key: EBAY_CAMPAIGN_ID
+        sync: false
+      - key: WALMART_IMPACT_ID
+        sync: false
+      - key: GENIUSLINK_TSID
+        sync: false
       - key: ALLOWED_ORIGINS
         value: '["*"]'  # Replace with your actual domain in production
       - key: RATE_LIMIT_PER_MINUTE
         value: 10
+      - key: KAGGLE_USERNAME
+        sync: false
+      - key: KAGGLE_KEY
+        sync: false

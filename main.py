@@ -18,6 +18,7 @@ from routes.health import router as health_router
 from config import settings
 
 logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 BASE_DIR = Path(__file__).resolve().parent
 FRONTEND_PATH = BASE_DIR / "index.html"
@@ -48,6 +49,17 @@ app.add_middleware(
 # ── Register route modules ───────────────────────────────────────────────────
 app.include_router(health_router)          # GET /health
 app.include_router(chat_router, prefix="/api")  # POST /api/chat
+
+
+@app.on_event("startup")
+async def warm_product_db() -> None:
+    """Load the dataset-backed product search layer at startup when available."""
+    try:
+        from services.db_service import get_db
+
+        get_db()
+    except Exception as exc:
+        logger.warning(f"ProductDB startup skipped: {exc}")
 
 
 # ── Serve frontend ───────────────────────────────────────────────────────────

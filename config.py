@@ -18,6 +18,8 @@ class Settings(BaseSettings):
     EBAY_CAMPAIGN_ID: str = ""        # eBay Partner Network campaign ID
     WALMART_IMPACT_ID: str = ""       # Walmart affiliate ID via Impact
     GENIUSLINK_TSID: str = ""         # Geniuslink tracking source ID (enables link localization)
+    KAGGLE_USERNAME: str = ""
+    KAGGLE_KEY: str = ""
 
     # ── Server ───────────────────────────────────────────────────────────────
     # In production: replace "*" with "https://yourfrontend.com"

@@ -23,5 +23,12 @@ cachetools==5.5.0
 # Image search
 duckduckgo-search==6.3.2
 
+# Dataset ingestion and search
+pandas==2.2.3
+kaggle==2.0.1
+sentence-transformers==3.3.1
+faiss-cpu==1.9.0
+numpy==1.26.4
+
 # Production Server
 gunicorn==22.0.0

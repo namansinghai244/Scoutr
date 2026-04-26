@@ -1,19 +1,20 @@
 """
 routes/chat.py — POST /api/chat
-Returns 4 tiers (cost_effective, basic, premium, lavish) with 3 products each.
+Orchestrates recommendations and enriches them with links and images.
 """
 
 import asyncio
 import logging
+
 from fastapi import APIRouter, HTTPException, Request
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
-from models import ChatRequest, ChatResponse, ProductRecommendation, ProductLinks
+from config import settings
+from models import ChatRequest, ChatResponse, ProductLinks, ProductRecommendation
 from services.ai_service import get_product_recommendation
 from services.affiliate_service import build_all_links
 from services.image_service import fetch_product_image
-from config import settings
 
 logger = logging.getLogger(__name__)
 limiter = Limiter(key_func=get_remote_address)
@@ -24,11 +25,15 @@ IMAGE_FETCH_CONCURRENCY = 4
 IMAGE_FETCH_TIMEOUT_SECONDS = 2.5
 
 
-async def _fetch_image_url(search_query: str, semaphore: asyncio.Semaphore) -> str | None:
+async def _fetch_image_url(
+    search_query: str,
+    semaphore: asyncio.Semaphore,
+    db_image_url: str | None = None,
+) -> str | None:
     async with semaphore:
         try:
             return await asyncio.wait_for(
-                asyncio.to_thread(fetch_product_image, search_query),
+                asyncio.to_thread(fetch_product_image, search_query, db_image_url),
                 timeout=IMAGE_FETCH_TIMEOUT_SECONDS,
             )
         except asyncio.TimeoutError:
@@ -38,11 +43,15 @@ async def _fetch_image_url(search_query: str, semaphore: asyncio.Semaphore) -> s
     return None
 
 
-async def build_product(product_data: dict, image_semaphore: asyncio.Semaphore) -> ProductRecommendation:
-    sq = product_data["search_query"]
+async def build_product(
+    product_data: dict,
+    image_semaphore: asyncio.Semaphore,
+) -> ProductRecommendation:
+    search_query = product_data["search_query"]
     asin = product_data.get("asin")
-    links = build_all_links(sq, asin)
-    image_url = await _fetch_image_url(sq, image_semaphore)
+    db_image_url = product_data.get("image_url")
+    links = build_all_links(search_query, asin)
+    image_url = await _fetch_image_url(search_query, image_semaphore, db_image_url)
     return ProductRecommendation(
         name=product_data["name"],
         category=product_data["category"],
@@ -51,7 +60,7 @@ async def build_product(product_data: dict, image_semaphore: asyncio.Semaphore) 
         original_price=product_data.get("original_price"),
         key_specs=product_data["key_specs"],
         why=product_data["why"],
-        search_query=sq,
+        search_query=search_query,
         asin=asin,
         image_url=image_url,
         links=ProductLinks(
@@ -69,35 +78,46 @@ async def chat(request: Request, body: ChatRequest):
     logger.info(f"Request: '{body.message[:60]}'")
 
     try:
-        history = [t.model_dump() for t in body.history]
+        history = [turn.model_dump() for turn in body.history]
         ai_data = await get_product_recommendation(body.message, history)
-    except ValueError as e:
-        logger.error(f"AI parse error: {e}")
-        raise HTTPException(status_code=500, detail="AI returned an unexpected format. Please try again.")
-    except Exception as e:
-        logger.error(f"AI service error: {e}")
-        raise HTTPException(status_code=502, detail="Could not reach AI service. Please try again.")
+    except ValueError as exc:
+        logger.error(f"AI parse error: {exc}")
+        raise HTTPException(
+            status_code=500,
+            detail="AI returned an unexpected format. Please try again.",
+        )
+    except Exception as exc:
+        logger.error(f"AI service error: {exc}")
+        raise HTTPException(
+            status_code=502,
+            detail="Could not reach AI service. Please try again.",
+        )
 
     try:
         result = {"intro": ai_data["intro"]}
         image_semaphore = asyncio.Semaphore(IMAGE_FETCH_CONCURRENCY)
-        task_tiers = []
+        tier_order: list[str] = []
         build_tasks = []
+
         for tier in TIERS:
             products = ai_data[tier]
-            names = [p["name"] for p in products]
+            names = [product["name"] for product in products]
             logger.info(f"  {tier}: {', '.join(names)}")
-            task_tiers.extend([tier] * len(products))
+            tier_order.extend([tier] * len(products))
             build_tasks.extend(
                 build_product(product, image_semaphore) for product in products
             )
+
         built_products = await asyncio.gather(*build_tasks)
         for tier in TIERS:
             result[tier] = []
-        for tier, product in zip(task_tiers, built_products):
+        for tier, product in zip(tier_order, built_products):
             result[tier].append(product)
-    except Exception as e:
-        logger.error(f"Product build error: {e}")
-        raise HTTPException(status_code=500, detail="Failed to assemble product data.")
+    except Exception as exc:
+        logger.error(f"Product build error: {exc}")
+        raise HTTPException(
+            status_code=500,
+            detail="Failed to assemble product data.",
+        )
 
     return ChatResponse(**result)
