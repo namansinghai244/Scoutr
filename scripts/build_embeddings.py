@@ -18,13 +18,16 @@ from pathlib import Path
 
 import numpy as np
 
+from config import settings
+
 logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
 log = logging.getLogger(__name__)
 
 DB_PATH = Path("data/products.db")
 INDEX_PATH = Path("data/faiss_index.bin")
 IDS_PATH = Path("data/faiss_ids.json")
-EMBEDDING_MODEL = "all-MiniLM-L6-v2"
+MODEL_DIR = Path(settings.EMBEDDING_MODEL_DIR)
+EMBEDDING_MODEL = settings.EMBEDDING_MODEL_NAME
 DEFAULT_BATCH_SIZE = 512
 
 
@@ -124,8 +127,15 @@ def main() -> None:
     texts = [build_search_text(row) for row in rows]
     ids = [row["id"] for row in rows]
 
-    log.info(f"Loading embedding model: {EMBEDDING_MODEL} ...")
-    model = SentenceTransformer(EMBEDDING_MODEL)
+    MODEL_DIR.parent.mkdir(parents=True, exist_ok=True)
+    if MODEL_DIR.exists():
+        log.info(f"Loading embedding model from local cache: {MODEL_DIR}")
+        model = SentenceTransformer(str(MODEL_DIR), local_files_only=True)
+    else:
+        log.info(f"Downloading embedding model: {EMBEDDING_MODEL}")
+        model = SentenceTransformer(EMBEDDING_MODEL)
+        model.save(str(MODEL_DIR))
+        log.info(f"Saved embedding model locally: {MODEL_DIR}")
 
     log.info(
         f"Generating embeddings in batches of {args.batch_size} "

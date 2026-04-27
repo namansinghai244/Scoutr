@@ -11,6 +11,10 @@ services:
         value: meta-llama/llama-3.1-8b-instruct
       - key: OPENROUTER_MAX_TOKENS
         value: 3000
+      - key: EMBEDDING_MODEL_NAME
+        value: all-MiniLM-L6-v2
+      - key: EMBEDDING_MODEL_DIR
+        value: data/models/all-MiniLM-L6-v2
       - key: AMAZON_AFFILIATE_TAG
         sync: false  # Set your real Associates tag in the Render dashboard
       - key: EBAY_CAMPAIGN_ID

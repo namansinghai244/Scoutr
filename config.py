@@ -12,6 +12,8 @@ class Settings(BaseSettings):
     OPENROUTER_API_KEY: str = "your_openrouter_api_key_here"
     OPENROUTER_MODEL: str = "meta-llama/llama-3.1-8b-instruct"
     OPENROUTER_MAX_TOKENS: int = 3000
+    EMBEDDING_MODEL_NAME: str = "all-MiniLM-L6-v2"
+    EMBEDDING_MODEL_DIR: str = "data/models/all-MiniLM-L6-v2"
 
     # ── Affiliate Programs ────────────────────────────────────────────────────
     AMAZON_AFFILIATE_TAG: str = "your-tag-20"

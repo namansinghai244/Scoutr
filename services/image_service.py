@@ -1,40 +1,21 @@
 """
-services/image_service.py — Returns product image URLs.
+services/image_service.py - Returns product image URLs.
 
 Priority:
 1. Database image URLs from the product dataset
-2. DuckDuckGo image search fallback
+2. No fallback network fetch; the frontend can render its own placeholder
 """
-
-import logging
-
-try:
-    from ddgs import DDGS
-except ImportError:
-    try:
-        from duckduckgo_search import DDGS
-    except ImportError:
-        DDGS = None
-
-logger = logging.getLogger(__name__)
 
 
 def fetch_product_image(search_query: str, db_image_url: str | None = None) -> str | None:
-    """Returns a product image URL, preferring the dataset image when available."""
-    if db_image_url and db_image_url.strip() and db_image_url.strip().lower() != "nan":
-        return db_image_url.strip()
+    """Returns a dataset image URL when one is available."""
+    del search_query  # Kept for call-site compatibility.
 
-    if DDGS is None:
+    if not db_image_url:
         return None
 
-    try:
-        logger.info(f"Fetching fallback image for: {search_query}")
-        with DDGS() as ddgs:
-            results = list(ddgs.images(search_query, max_results=1))
-            if results:
-                image_url = results[0].get("image")
-                logger.info(f"Found fallback image URL: {image_url}")
-                return image_url
-    except Exception as exc:
-        logger.warning(f"Failed to fetch image for {search_query}: {exc}")
-    return None
+    image_url = db_image_url.strip()
+    if not image_url or image_url.lower() == "nan":
+        return None
+
+    return image_url

@@ -9,5 +9,6 @@ data/datasets/
 data/products.db
 data/faiss_index.bin
 data/faiss_ids.json
+data/models/
 _incoming_dataset_bundle/
 _kaggle_auth/

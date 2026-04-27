@@ -20,9 +20,6 @@ httpx==0.27.2
 # In-memory caching for API responses
 cachetools==5.5.0
 
-# Image search
-duckduckgo-search==6.3.2
-
 # Dataset ingestion and search
 pandas==2.2.3
 kaggle==2.0.1
