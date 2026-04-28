@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     GENIUSLINK_TSID: str = ""         # Geniuslink tracking source ID (enables link localization)
     KAGGLE_USERNAME: str = ""
     KAGGLE_KEY: str = ""
+    KAGGLE_API_TOKEN: str = ""
 
     # ── Server ───────────────────────────────────────────────────────────────
     # In production: replace "*" with "https://yourfrontend.com"

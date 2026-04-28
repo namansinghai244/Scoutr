@@ -31,3 +31,5 @@ services:
         sync: false
       - key: KAGGLE_KEY
         sync: false
+      - key: KAGGLE_API_TOKEN
+        sync: false
